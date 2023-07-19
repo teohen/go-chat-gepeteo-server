@@ -1,4 +1,4 @@
-module github.com/teohen/go-chat-server
+module github.com/teohen/go-chat-gepeteo-server
 
 go 1.20
 

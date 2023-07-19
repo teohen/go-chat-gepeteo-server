@@ -36,7 +36,7 @@ func handleWS(ws *websocket.Conn) {
 		ws: ws,
 	}
 
-	generalRoom := server.getRoom("general")
+	generalRoom := server.GetRoomByName("general")
 	if generalRoom == nil {
 		generalRoom = &Room{
 			name: "general",

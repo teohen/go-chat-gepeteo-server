@@ -37,13 +37,13 @@ func (s *Server) readLoop(client Client) {
 			continue
 		}
 		msg := buf[:n]
-		generalRoom := s.getRoom("general")
+		generalRoom := s.GetRoomByName("general")
 		sClient := generalRoom.GetClient(&client)
 		s.handleCommands(sClient, string(msg))
 	}
 }
 
-func (s *Server) getRoom(name string) *Room {
+func (s *Server) GetRoomByName(name string) *Room {
 	for _, sRoom := range s.rooms {
 		if sRoom.name == name {
 			return sRoom
@@ -86,7 +86,7 @@ func (s *Server) handleCommands(client *Client, msg string) {
 
 func (s *Server) serverCommands(client *Client, msg []string) {
 	fmt.Println("server commands")
-	generalRoom := s.getRoom("general")
+	generalRoom := s.GetRoomByName("general")
 
 	if msg[1] == "ls_clients" {
 		listClients := "Clients:\n"
@@ -115,20 +115,20 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 			return
 		}
 
-		roomName := msg[2]
+		newRoomName := msg[2]
+		existentRoom := s.GetRoomByName(newRoomName)
 
-		for _, sRoom := range s.rooms {
-			if sRoom.name == roomName {
-				sendMessageTo(client, fmt.Sprintf("Room name: %s already exists", roomName))
-				return
-			}
-			room := Room{
-				name: roomName,
-			}
-
-			room.AddClient(client)
-			s.addRoom(&room)
+		if existentRoom != nil {
+			sendMessageTo(client, "room name already exists. Pick another one!")
+			return
 		}
+
+		newRoom := Room{
+			name: newRoomName,
+		}
+
+		s.addRoom(&newRoom)
+		newRoom.AddClient(client)
 	} else {
 		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
 		return
@@ -142,7 +142,7 @@ func (s *Server) clientCommands(client *Client, msg []string) {
 			return
 		}
 
-		generalRoom := s.getRoom("general")
+		generalRoom := s.GetRoomByName("general")
 		existClient := generalRoom.GetClientByName(msg[2])
 
 		if existClient != nil {

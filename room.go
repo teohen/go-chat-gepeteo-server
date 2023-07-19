@@ -25,3 +25,21 @@ func (r *Room) GetClient(client *Client) *Client {
 	}
 	return nil
 }
+
+func (r *Room) GetClientsNames() []string {
+	var clientsNames []string
+
+	for _, client := range r.clients {
+		clientsNames = append(clientsNames, client.name)
+	}
+	return clientsNames
+}
+
+func (r *Room) GetClientByName(name string) *Client {
+	for _, rClient := range r.clients {
+		if rClient.name == name {
+			return rClient
+		}
+	}
+	return nil
+}

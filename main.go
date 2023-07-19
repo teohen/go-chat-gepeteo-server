@@ -17,6 +17,8 @@ server
 
 client
 	set_name ok
+	join ROOM_NAME
+	leave ROOM_NAME
 
 msg
 	c CLIENT_NAME

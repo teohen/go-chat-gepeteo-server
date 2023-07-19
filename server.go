@@ -91,20 +91,24 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 	if msg[1] == "ls_clients" {
 		listClients := "Clients:\n"
 
-		for _, gClient := range generalRoom.clients {
-			fmt.Println("clients", gClient.name)
-			listClients += gClient.name + "\n"
+		names := generalRoom.GetClientsNames()
+
+		for _, name := range names {
+			listClients += name + "\n"
 		}
 
-		client.ws.Write([]byte(listClients))
+		sendMessageTo(client, listClients)
 		return
 	} else if msg[1] == "ls_rooms" {
 		listRooms := "Rooms:\n"
+
 		for _, sRoom := range s.rooms {
 			listRooms += sRoom.name + "\n"
 		}
-		client.ws.Write([]byte(fmt.Sprintf("%s\n", listRooms)))
+
+		sendMessageTo(client, listRooms)
 		return
+
 	} else if msg[1] == "cr_room" {
 		if len(msg) < 3 {
 			sendMessageTo(client, fmt.Sprintf("room name is required! send 'server cr_room ROOM_NAME'"))
@@ -134,14 +138,19 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 func (s *Server) clientCommands(client *Client, msg []string) {
 	if msg[1] == "set_name" {
 		if len(msg) < 3 {
-			sendMessageTo(client, fmt.Sprintf("client name is required! send 'client set_name CLIENT_NAME'"))
+			sendMessageTo(client, "client name is required! send 'client set_name CLIENT_NAME'")
+			return
+		}
+
+		generalRoom := s.getRoom("general")
+		existClient := generalRoom.GetClientByName(msg[2])
+
+		if existClient != nil {
+			sendMessageTo(client, "client name already taken. Pick another one!")
 			return
 		}
 
 		client.setName(msg[2])
-
-		generalRoom := s.getRoom("general")
-		generalRoom.AddClient(client)
 		sendMessageTo(client, fmt.Sprintf("name set: %s", msg[2]))
 	} else {
 		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")

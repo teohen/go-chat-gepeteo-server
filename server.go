@@ -15,6 +15,7 @@ var server *Server
 
 func NewServer() *Server {
 	if server == nil {
+		fmt.Println("DEBUG: CREATING A NEW SERVER")
 		server = &Server{
 			rooms: []*Room{},
 		}
@@ -88,7 +89,7 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 	fmt.Println("server commands")
 	generalRoom := s.GetRoomByName("general")
 
-	if msg[1] == "ls_clients" {
+	if msg[1] == "ls_clients" && len(msg) < 3 {
 		listClients := "Clients:\n"
 
 		names := generalRoom.GetClientsNames()
@@ -99,6 +100,25 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 
 		sendMessageTo(client, listClients)
 		return
+	} else if msg[1] == "ls_clients" && len(msg) > 2 {
+		roomName := msg[2]
+		room := s.GetRoomByName(roomName)
+
+		if room == nil {
+			sendMessageTo(client, "room does not exist. See list of rooms with 'server ls_rooms' or create one with 'server cr_room ROOM_NAME")
+			return
+		}
+
+		names := room.GetClientsNames()
+
+		listClientsNames := fmt.Sprintf("Clients in room %s: \n", roomName)
+
+		for _, name := range names {
+			listClientsNames += name + "\n"
+		}
+
+		sendMessageTo(client, listClientsNames)
+
 	} else if msg[1] == "ls_rooms" {
 		listRooms := "Rooms:\n"
 
@@ -129,6 +149,7 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 
 		s.addRoom(&newRoom)
 		newRoom.AddClient(client)
+		sendMessageTo(client, fmt.Sprintf("Room %s created and client %s has entered it", newRoomName, client.name))
 	} else {
 		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
 		return
@@ -152,6 +173,20 @@ func (s *Server) clientCommands(client *Client, msg []string) {
 
 		client.setName(msg[2])
 		sendMessageTo(client, fmt.Sprintf("name set: %s", msg[2]))
+	} else if msg[1] == "join" {
+		if len(msg) < 3 {
+			sendMessageTo(client, "room name is required for the join command! send 'client join ROOM_NAME'")
+			return
+		}
+
+		room := s.GetRoomByName(msg[2])
+		if room == nil {
+			sendMessageTo(client, "room does not exist. See list of rooms with 'server ls_rooms' or create one with 'server cr_room ROOM_NAME")
+			return
+		}
+
+		room.AddClient(client)
+		sendMessageTo(client, fmt.Sprintf("Client %s has entered room %s", client.name, room.name))
 	} else {
 		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
 		return

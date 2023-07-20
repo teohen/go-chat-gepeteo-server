@@ -41,10 +41,10 @@ func handleWS(ws *websocket.Conn) {
 		generalRoom = &Room{
 			name: "general",
 		}
+		server.addRoom(generalRoom)
 	}
 
 	generalRoom.AddClient(&client)
-	server.addRoom(generalRoom)
 	server.readLoop(client)
 }
 

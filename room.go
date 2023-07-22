@@ -43,3 +43,15 @@ func (r *Room) GetClientByName(name string) *Client {
 	}
 	return nil
 }
+
+func (r *Room) RemoveClient(client *Client) bool {
+	for idx, rClient := range r.clients {
+		if rClient.id == client.id {
+			r.clients[idx] = r.clients[len(r.clients)-1]
+			r.clients = r.clients[:len(r.clients)-1]
+			return true
+		}
+	}
+
+	return false
+}

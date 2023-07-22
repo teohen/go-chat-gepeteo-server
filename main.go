@@ -17,8 +17,9 @@ server
 
 client
 	set_name ok
-	join ROOM_NAME
+	join ROOM_NAME ok
 	leave ROOM_NAME
+	ls-rooms
 
 msg
 	c CLIENT_NAME

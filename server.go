@@ -15,7 +15,6 @@ var server *Server
 
 func NewServer() *Server {
 	if server == nil {
-		fmt.Println("DEBUG: CREATING A NEW SERVER")
 		server = &Server{
 			rooms: []*Room{},
 		}
@@ -86,7 +85,6 @@ func (s *Server) handleCommands(client *Client, msg string) {
 }
 
 func (s *Server) serverCommands(client *Client, msg []string) {
-	fmt.Println("server commands")
 	generalRoom := s.GetRoomByName("general")
 
 	if msg[1] == "ls_clients" && len(msg) < 3 {
@@ -187,6 +185,28 @@ func (s *Server) clientCommands(client *Client, msg []string) {
 
 		room.AddClient(client)
 		sendMessageTo(client, fmt.Sprintf("Client %s has entered room %s", client.name, room.name))
+	} else if msg[1] == "leave" {
+		if len(msg) < 3 {
+			sendMessageTo(client, "room name is required! send 'client leave ROOM_NAME'")
+			return
+		}
+
+		room := s.GetRoomByName(msg[2])
+
+		if room == nil {
+			sendMessageTo(client, "room was not found. Send a room name that exists")
+			return
+		}
+
+		clientExistRoom := room.GetClient(client)
+
+		if clientExistRoom == nil {
+			sendMessageTo(client, fmt.Sprintf("client is not inside the room %s. See list of rooms that you're in with 'client ls_rooms'", msg[2]))
+			return
+		}
+
+		room.RemoveClient(client)
+		sendMessageTo(client, fmt.Sprintf("client %s left room %s", client.name, room.name))
 	} else {
 		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
 		return

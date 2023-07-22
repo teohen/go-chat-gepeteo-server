@@ -207,11 +207,21 @@ func (s *Server) clientCommands(client *Client, msg []string) {
 
 		room.RemoveClient(client)
 		sendMessageTo(client, fmt.Sprintf("client %s left room %s", client.name, room.name))
+	} else if msg[1] == "ls_rooms" {
+		var roomsOfClient = "List of rooms:\n"
+
+		for _, room := range s.rooms {
+			roomWithClient := room.GetClientByName(client.name)
+			if roomWithClient != nil {
+				roomsOfClient += roomWithClient.name
+			}
+		}
+		sendMessageTo(client, roomsOfClient)
+		return
 	} else {
 		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
 		return
 	}
-
 }
 
 func sendMessageTo(client *Client, msg string) {

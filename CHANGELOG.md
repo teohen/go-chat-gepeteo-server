@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.4.0] - 2023-07-21
+
+### Added
+ - Added send direct message to other client and for clients in rooms
+ - Added client can leave a room
+
+### Changed
+ - Refactored the repeating errors message to a constant
+
 ## [1.3.0] - 2023-07-19
 
 ### Added

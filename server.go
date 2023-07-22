@@ -11,6 +11,9 @@ type Server struct {
 	clients []*Client
 }
 
+var NO_ROOM_ERROR = "room %s does not exist. See all rooms with 'server ls_rooms' and see all rooms of a client with 'client ls_rooms'"
+var UNKNOW_COMMAND_ERROR = "unknown command. Send 'help' for a list of commands"
+
 var server *Server
 
 func NewServer() *Server {
@@ -78,8 +81,10 @@ func (s *Server) handleCommands(client *Client, msg string) {
 		s.serverCommands(client, clientMsg)
 	} else if clientMsg[0] == "client" {
 		s.clientCommands(client, clientMsg)
+	} else if clientMsg[0] == "msg" {
+		s.msgCommands(client, clientMsg)
 	} else {
-		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
+		sendMessageTo(client, UNKNOW_COMMAND_ERROR)
 		return
 	}
 }
@@ -103,7 +108,7 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 		room := s.GetRoomByName(roomName)
 
 		if room == nil {
-			sendMessageTo(client, "room does not exist. See list of rooms with 'server ls_rooms' or create one with 'server cr_room ROOM_NAME")
+			sendMessageTo(client, fmt.Sprintf(NO_ROOM_ERROR, roomName))
 			return
 		}
 
@@ -149,7 +154,7 @@ func (s *Server) serverCommands(client *Client, msg []string) {
 		newRoom.AddClient(client)
 		sendMessageTo(client, fmt.Sprintf("Room %s created and client %s has entered it", newRoomName, client.name))
 	} else {
-		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
+		sendMessageTo(client, UNKNOW_COMMAND_ERROR)
 		return
 	}
 }
@@ -179,7 +184,7 @@ func (s *Server) clientCommands(client *Client, msg []string) {
 
 		room := s.GetRoomByName(msg[2])
 		if room == nil {
-			sendMessageTo(client, "room does not exist. See list of rooms with 'server ls_rooms' or create one with 'server cr_room ROOM_NAME")
+			sendMessageTo(client, fmt.Sprintf(NO_ROOM_ERROR, msg[2]))
 			return
 		}
 
@@ -207,23 +212,67 @@ func (s *Server) clientCommands(client *Client, msg []string) {
 
 		room.RemoveClient(client)
 		sendMessageTo(client, fmt.Sprintf("client %s left room %s", client.name, room.name))
+		// MAYBE CREATE THE RELATION N CLIENT X N ROOMS FOR THIS
+		// SEARCH BE LESS EXPENSIVE
 	} else if msg[1] == "ls_rooms" {
 		var roomsOfClient = "List of rooms:\n"
 
 		for _, room := range s.rooms {
 			roomWithClient := room.GetClientByName(client.name)
 			if roomWithClient != nil {
-				roomsOfClient += roomWithClient.name
+				roomsOfClient += room.name + "\n"
 			}
 		}
 		sendMessageTo(client, roomsOfClient)
 		return
 	} else {
-		sendMessageTo(client, "unknown command. Send 'help' for a list of commands")
+		sendMessageTo(client, UNKNOW_COMMAND_ERROR)
+		return
+	}
+}
+
+func (s *Server) msgCommands(client *Client, msg []string) {
+	if len(msg) < 4 {
+		sendMessageTo(client, "Missing information to send message. Send 'msg r|c CLIENT_NAME|ROOM_NAME MESSAGE' to send a message")
+	}
+
+	message := strings.Join(msg[3:], " ")
+
+	if msg[1] == "r" {
+		room := s.GetRoomByName(msg[2])
+		if room == nil {
+			sendMessageTo(client, fmt.Sprintf(NO_ROOM_ERROR, msg[2]))
+			return
+		}
+		for _, rClient := range room.clients {
+			if rClient.id != client.id {
+				sendMessageTo(rClient, message)
+			}
+		}
+		return
+	} else if msg[1] == "c" {
+		generalRoom := s.GetRoomByName("general")
+
+		receiver := generalRoom.GetClientByName(msg[2])
+
+		if receiver == nil {
+			sendMessageTo(client, fmt.Sprintf("Error sending direct message. Receiver %s not found", msg[2]))
+			return
+		}
+		sendMessageTo(receiver, message)
+		return
+	} else {
+		sendMessageTo(client, UNKNOW_COMMAND_ERROR)
 		return
 	}
 }
 
 func sendMessageTo(client *Client, msg string) {
 	client.ws.Write([]byte(msg))
+}
+
+func sendMessageToList(clients []*Client, msg string) {
+	for _, client := range clients {
+		sendMessageTo(client, msg)
+	}
 }

@@ -10,7 +10,7 @@ import (
 /*
 
 server
-	ls-clients ROOM_NAME
+	ls-clients ROOM_NAME ok
 	ls-clients ok
 	ls-rooms ok
 	cr_room ok
@@ -18,12 +18,12 @@ server
 client
 	set_name ok
 	join ROOM_NAME ok
-	leave ROOM_NAME
-	ls-rooms
+	leave ROOM_NAME ok
+	ls-rooms ok
 
 msg
-	c CLIENT_NAME
-	r ROOM_NAME
+	c CLIENT_NAME ok
+	r ROOM_NAME ok
 
 help
 	help (server, client, room)
